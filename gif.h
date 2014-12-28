@@ -1,6 +1,15 @@
-#ifndef GIF_H_
-#define GIF_H_
+//
+//  gif.h
+//  GIF-T
+//
+//  Created by Alexander Hill on 12/28/14.
+//  Copyright (c) 2014 Alexander Hill. All rights reserved.
+//
 
+#ifndef __GIF_T__gif__
+#define __GIF_T__gif__
+
+#include <stdio.h>
 #include <iostream>
 #include <fstream>
 
@@ -47,7 +56,6 @@ class GIF
     static const int IMAGE_DESCRIPTOR = 0x2C;
     static const int GIF_EOF = 0x3D;
 
-
     ifstream gif_file;
     struct gif_header header;
     struct gif_gce gce;
@@ -56,9 +64,9 @@ public:
     GIF(const string filename);
     void open(const string filename);
     void parse();
-
+    
     virtual ~GIF();
-
+    
 protected:
     void parse_header();
     void parse_gce();
@@ -67,15 +75,10 @@ protected:
 };
 
 
-class GIFParseException : public exception
+class GIFParseError : public runtime_error
 {
-    // const char *message;
-// public:
-//     GIFParseException();
-//     GIFParseException(const char * mgs);
-
+public:
+    GIFParseError(const std::string& msg) : runtime_error(msg) {}
 };
 
-
-
-#endif
+#endif /* defined(__GIF_T__gif__) */
