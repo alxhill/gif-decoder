@@ -39,6 +39,15 @@ struct gif_gce
 
 class GIF
 {
+    static const int EXTENSION_BLOCK = 0x21;
+    static const int EXTENSION_BLOCK_GCE = 0xF9;
+    static const int EXTENSION_BLOCK_PLAINTEXT = 0x01;
+    static const int EXTENSION_BLOCK_COMMENT = 0xFE;
+    static const int EXTENSION_BLOCK_APPLICATION = 0xFF;
+    static const int IMAGE_DESCRIPTOR = 0x2C;
+    static const int GIF_EOF = 0x3D;
+
+
     ifstream gif_file;
     struct gif_header header;
     struct gif_gce gce;
@@ -53,6 +62,8 @@ public:
 protected:
     void parse_header();
     void parse_gce();
+    void parse_subblock();
+    void skip_extension();
 };
 
 
