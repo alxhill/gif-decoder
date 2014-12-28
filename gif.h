@@ -61,8 +61,8 @@ class GIF
     struct gif_gce gce;
 public:
     GIF();
-    GIF(const string filename);
-    void open(const string filename);
+    GIF(string filename);
+    void open(string filename);
     void parse();
     
     virtual ~GIF();

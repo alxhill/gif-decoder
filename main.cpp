@@ -7,16 +7,16 @@
 //
 
 #include <iostream>
-#include "gif.h"
+#include "gif.cpp"
 
 int main(int argc, const char * argv[]) {
-    std::cout << "GIF Parser" <<  argc << endl;
+    std::cout << "GIF Parser" << endl;
     
     std::string filename;
     if (argc < 2)
         filename = "test.gif";
     else
-        filename = argv[1];
+        filename = std::string(argv[1]);
     
     GIF gif(filename);
 

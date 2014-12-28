@@ -141,13 +141,13 @@ void GIF::parse_gce()
     gif_file.read((char*)&gce.block_size, 1);
     LOG("gce block size: %d\n", (int)gce.block_size);
     
-    char packed[2];
-    gif_file.read(packed, 2);
-    gce.disposal_method = (packed[0]&1)<<2 | (packed[1]>>2);
+    char packed;
+    gif_file.read((char*)&packed, 1);
+    gce.disposal_method = (packed>>2) & 0x7;
     LOG("Disposal method: %d\n", gce.disposal_method);
     
-    gce.user_input_flag = (packed[1]>>1) & 1;
-    gce.transparent_colour_flag = packed[1] & 1;
+    gce.user_input_flag = (packed>>1) & 0x1;
+    gce.transparent_colour_flag = packed & 0x1;
     LOG("UI Flag: %d, transparent colour flag: %d\n", gce.user_input_flag, gce.transparent_colour_flag);
     
     char delay_time[2];
@@ -164,18 +164,19 @@ void GIF::parse_gce()
 
 void GIF::skip_extension()
 {
-    int total_size;
+    int total_size = 0;
     uint8_t block_size;
     uint8_t next;
-    gif_file.read((char*)&block_size, 1);
-    
-    LOG("skipping %d bytes\n", block_size);
-    gif_file.seekg((int)block_size, gif_file.cur);
     while (true) {
         gif_file.read((char*)&block_size, 1);
+        total_size += block_size + 1; // include the size bytes in the total size
         LOG("skipping %d bytes\n", (int)block_size);
-        if (block_size == 0)
+        if (block_size == 0) {
+            LOG("Total number of skipped bytes: %d\n", total_size-1);
+            // finally, skip the block terminator
+            // gif_file.seekg(1, gif_file.cur);
             return;
+        }
         gif_file.seekg((unsigned int)block_size, gif_file.cur);
     }
 }
