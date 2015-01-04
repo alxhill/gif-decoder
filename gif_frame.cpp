@@ -16,10 +16,10 @@ void GIFFrame::parse()
     gif_file.read((char*)&next, 1);
     switch(next)
     {
-        case EXTENSION_BLOCK_GCE:
+        case GIF::EXTENSION_BLOCK_GCE:
             parse_gce();
             break;
-        case IMAGE_DESCRIPTOR:
+        case GIF::IMAGE_DESCRIPTOR:
             parse_descriptor();
             break;
         default:

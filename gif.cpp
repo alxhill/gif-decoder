@@ -136,9 +136,10 @@ void GIF::parse_header()
     if (header.gct_flag) {
         header.gct = new uint8_t[3*header.gct_size]; // 3 bytes per colour
         gif_file.read((char*)header.gct, 3*header.gct_size);
-        cout << "colour table:" << endl;
-        for (int i = 0; i < header.gct_size; i++)
-            cout << hex << (int)header.gct[i*3] << (int)header.gct[i*3+1] << (int)header.gct[i*3+2] << endl;
+        LOG("colour table:\n");
+        for (int i = 0; i < header.gct_size; i++) {
+            LOG("%#08x\n", (int)(header.gct[i*3]<<4 | header.gct[i*3+1]<<2 | header.gct[i*3+2]));
+        }
     }
 }
 

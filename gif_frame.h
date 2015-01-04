@@ -40,9 +40,6 @@ struct gif_descriptor
 
 class GIFFrame
 {
-    static const uint8_t EXTENSION_BLOCK_GCE = 0xF9;
-    static const uint8_t IMAGE_DESCRIPTOR = 0x2C;
-
     struct gif_gce gce;
     struct gif_descriptor dsc;
 

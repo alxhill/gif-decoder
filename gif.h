@@ -15,7 +15,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include "gif_frame.cpp"
+#include "gif_frame.h"
 
 using namespace std;
 
