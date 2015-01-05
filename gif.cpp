@@ -44,9 +44,9 @@ void GIF::parse()
             switch(next)
             {
                 case EXTENSION_BLOCK_GCE: {
-                    gif_file.putback(next);
                     GIFFrame frame(gif_file);
-                    frame.parse();
+                    frame.parse_gce();
+                    frame.parse(header.gct, header.gct_size);
                     frames.push_back(frame);
                     break;
                 }
@@ -71,9 +71,9 @@ void GIF::parse()
         else if (next == IMAGE_DESCRIPTOR)
         {
             LOG("Parsing image descriptor\n");
-            gif_file.putback(next);
             GIFFrame frame(gif_file);
-            frame.parse();
+            gif_file.putback(next);
+            frame.parse(header.gct, header.gct_size);
             frames.push_back(frame);
         }
         else if (next == GIF_EOF)
@@ -158,3 +158,4 @@ void GIF::skip_extension()
         gif_file.seekg((unsigned int)block_size, gif_file.cur);
     }
 }
+
