@@ -1,11 +1,3 @@
-//
-//  gif_frame.h
-//  GIF-T
-//
-//  Created by Alexander Hill on 12/29/14.
-//  Copyright (c) 2014 Alexander Hill. All rights reserved.
-//
-
 #ifndef __GIF_T__gif_frame__
 #define __GIF_T__gif_frame__
 

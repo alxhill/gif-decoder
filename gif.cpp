@@ -1,11 +1,3 @@
-//
-//  gif.cpp
-//  GIF-T
-//
-//  Created by Alexander Hill on 12/28/14.
-//  Copyright (c) 2014 Alexander Hill. All rights reserved.
-//
-
 #include <cassert>
 #include <cstring>
 #include <cmath>

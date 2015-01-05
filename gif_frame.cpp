@@ -1,11 +1,3 @@
-//
-//  gif_frame.cpp
-//  GIF-T
-//
-//  Created by Alexander Hill on 12/29/14.
-//  Copyright (c) 2014 Alexander Hill. All rights reserved.
-//
-
 #include <cstdio>
 #include <unordered_map>
 #include "gif_frame.h"
