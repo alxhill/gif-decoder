@@ -7,7 +7,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include "gif_frame.h"
+#include "gif_frame.hpp"
 
 using namespace std;
 

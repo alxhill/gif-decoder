@@ -1,7 +1,7 @@
 #include <cstdio>
-#include <unordered_map>
-#include "gif_frame.h"
-#include "gif.h"
+#include <vector>
+#include "gif_frame.hpp"
+#include "gif.hpp"
 
 void GIFFrame::parse(uint8_t *gct, uint8_t gct_size)
 {
@@ -75,7 +75,7 @@ void GIFFrame::parse_data(uint8_t *gct, uint8_t gct_size)
     uint8_t code_size;
     gif_file.read((char *) &code_size, 1);
 
-    unordered_map<uint8_t, uint8_t> code_table;
+    vector<uint8_t> code_table;
     vector<uint8_t> index_stream;
 
     // initialise the code table

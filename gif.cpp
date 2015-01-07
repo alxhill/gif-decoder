@@ -1,7 +1,7 @@
 #include <cassert>
 #include <cstring>
 #include <cmath>
-#include "gif.h"
+#include "gif.hpp"
 
 GIF::GIF() {}
 
