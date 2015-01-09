@@ -17,7 +17,7 @@ void GIF::open(const string filename)
 {
     gif_file.open(filename, ifstream::binary | ifstream::in);
     if (!gif_file) {
-        throw runtime_error(std::string("file does not exist"));
+        throw runtime_error(string("file does not exist"));
     }
 }
 

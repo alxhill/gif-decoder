@@ -1,5 +1,5 @@
-#ifndef __GIF_T__gif__
-#define __GIF_T__gif__
+#ifndef __gif_frame_h__
+#define __gif_frame_h__
 
 #include "debug.h"
 
@@ -61,4 +61,4 @@ public:
     GIFParseError(const std::string& msg) : runtime_error(msg) {}
 };
 
-#endif /* defined(__GIF_T__gif__) */
+#endif

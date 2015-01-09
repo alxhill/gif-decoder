@@ -1,5 +1,5 @@
-#ifndef __GIF_T__gif_frame__
-#define __GIF_T__gif_frame__
+#ifndef __gif_h__
+#define __gif_h__
 
 #include "debug.h"
 
@@ -50,4 +50,4 @@ public:
     void parse_data(uint8_t *gct, uint8_t gct_size);
 };
 
-#endif /* defined(__GIF_T__gif_frame__) */
+#endif

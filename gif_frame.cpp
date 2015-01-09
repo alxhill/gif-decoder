@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <vector>
+#include <bitset>
 #include "gif_frame.hpp"
 #include "gif.hpp"
 
@@ -69,26 +70,72 @@ void GIFFrame::parse_lct()
     }
 }
 
+uint8_t get_code(uint8_t byte, uint8_t bits)
+{
+    LOG("%d bits", bits);
+    uint8_t num = 0;
+    while (bits > 0) {
+        bits--;
+        num |= byte & (1<<bits);
+    }
+    LOG(" of byte %#04x = %d\n", byte, num);
+    return num;
+}
+
+void reverse_byte(uint8_t &byte)
+{
+    byte = (byte & 0xF0) >> 4 | (byte & 0x0F) << 4;
+    byte = (byte & 0xCC) >> 2 | (byte & 0x33) << 2;
+    byte = (byte & 0xAA) >> 1 | (byte & 0x55) << 1;
+}
+
 void GIFFrame::parse_data(uint8_t *gct, uint8_t gct_size)
 {
     LOG("Parsing image data\n");
     uint8_t code_size;
     gif_file.read((char *) &code_size, 1);
 
-    vector<uint8_t> code_table;
-    vector<uint8_t> index_stream;
-
     // initialise the code table
     uint8_t *ct = dsc.lct_flag ? lct : gct;
     uint8_t ct_size = dsc.lct_flag ? dsc.lct_size : gct_size;
+    LOG("Colour table size: %d\n", ct_size);
     if (ct == nullptr || ct_size == 0)
         throw GIFParseError(string("No colour table found."));
     int i;
+
+    vector<uint8_t> code_table(ct_size+2);
+    vector<uint8_t> code_stream;
+
     for (i = 0; i < ct_size+2; i++)
         code_table[i] = i;
 
-    uint8_t clear_code = i-1;
-    uint8_t eoi_code = i-2;
+    //uint8_t clear_code = i-1;
+    //uint8_t eoi_code = i-2;
 
-
+    uint8_t cur_code;
+    uint16_t cur_byte;
+    gif_file.read((char*)&cur_byte, 1);
+    reverse_byte((uint8_t&)cur_byte);
+    i = 0;
+    uint8_t offset = 0;
+    while (i++ < 10) {
+        uint8_t shift = 0;
+        while (shift < 8 - code_size) {
+            LOG("=C=\n");
+            cur_code = get_code((uint8_t)cur_byte >> shift, code_size);
+            code_stream.push_back(cur_code);
+            shift += code_size;
+        }
+        LOG("Getting new byte. shift: %d, curr: %#04x\n", shift, cur_byte);
+        if (offset < 8) {
+            offset += 8 - shift;
+            uint8_t next_byte;
+            gif_file.read((char*)&next_byte, 1);
+            reverse_byte(next_byte);
+            cur_byte = (cur_byte >> shift) | (next_byte << offset);
+            LOG("cur_byte is now %#08x\n", cur_byte);
+        } else {
+            offset -= 8;
+        }
+    }
 }
