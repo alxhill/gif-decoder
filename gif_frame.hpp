@@ -43,11 +43,11 @@ class GIFFrame
     ifstream &gif_file;
 public:
     GIFFrame(ifstream &gfile) : gif_file(gfile) {};
-    void parse(uint8_t *gct = nullptr, uint8_t gct_size = 0);
-    void parse_gce();
-    void parse_descriptor();
-    void parse_lct();
-    void parse_data(uint8_t *gct, uint8_t gct_size);
+    void decode(uint8_t *gct = nullptr, uint8_t gct_size = 0);
+    void decode_gce();
+    void decode_descriptor();
+    void decode_lct();
+    void decode_data(uint8_t *gct, uint8_t gct_size);
 };
 
 #endif

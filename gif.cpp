@@ -5,12 +5,16 @@
 
 GIF::GIF() {}
 
-GIF::~GIF() {}
+GIF::~GIF()
+{
+    for (auto frame : frames)
+        delete frame;
+}
 
 GIF::GIF(const string filename)
 {
     open(filename);
-    parse();
+    decode();
 }
 
 void GIF::open(const string filename)
@@ -21,9 +25,9 @@ void GIF::open(const string filename)
     }
 }
 
-void GIF::parse()
+void GIF::decode()
 {
-    parse_header();
+    decode_header();
 
     while(true) {
         uint8_t next;
@@ -36,9 +40,9 @@ void GIF::parse()
             switch(next)
             {
                 case EXTENSION_BLOCK_GCE: {
-                    GIFFrame frame(gif_file);
-                    frame.parse_gce();
-                    frame.parse(header.gct, header.gct_size);
+                    auto frame = new GIFFrame(gif_file);
+                    frame->decode_gce();
+                    frame->decode(header.gct, header.gct_size);
                     frames.push_back(frame);
                     break;
                 }
@@ -62,16 +66,16 @@ void GIF::parse()
         }
         else if (next == IMAGE_DESCRIPTOR)
         {
-            LOG("Parsing image descriptor\n");
-            GIFFrame frame(gif_file);
+            LOG("Decoding image descriptor\n");
+            auto frame = new GIFFrame(gif_file);
             gif_file.putback(next);
-            frame.parse(header.gct, header.gct_size);
+            frame->decode(header.gct, header.gct_size);
             frames.push_back(frame);
         }
         else if (next == GIF_EOF)
         {
             // EOF! :)
-            LOG("Finished parsing gif file\n");
+            LOG("Finished decoding gif file\n");
             return;
         }
         else
@@ -83,19 +87,19 @@ void GIF::parse()
     }
 }
 
-void GIF::parse_header()
+void GIF::decode_header()
 {
-    LOG("Parsing GIF Header\n");
+    LOG("Decoding GIF Header\n");
 
     gif_file.read(header.signature, 3);
     gif_file.read(header.version, 3);
     header.signature[3] = '\0';
     header.version[3] = '\0';
     if (memcmp(header.signature, "GIF", 3) != 0)
-        throw GIFParseError(std::string("Invalid signature. Are you sure this file is a GIF?"));
+        throw GIFDecodeError(std::string("Invalid signature. Are you sure this file is a GIF?"));
 
     if (memcmp(header.version, "89a", 3) != 0)
-        throw GIFParseError(std::string("Invalid GIF version. Only GIF89a is currently supported."));
+        throw GIFDecodeError(std::string("Invalid GIF version. Only GIF89a is currently supported."));
 
     LOG("signature: %s\n", header.signature);
     LOG("version: %s\n", header.version);

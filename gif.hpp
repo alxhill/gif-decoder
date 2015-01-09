@@ -30,7 +30,7 @@ class GIF
 {
     ifstream gif_file;
 
-    vector<GIFFrame> frames;
+    vector<GIFFrame*> frames;
 public:
     static const uint8_t EXTENSION_BLOCK = 0x21;
     static const uint8_t EXTENSION_BLOCK_GCE = 0xF9;
@@ -45,20 +45,20 @@ public:
     GIF();
     GIF(string filename);
     void open(string filename);
-    void parse();
+    void decode();
 
     virtual ~GIF();
 
 protected:
-    void parse_header();
+    void decode_header();
     void skip_extension();
 };
 
 
-class GIFParseError : public runtime_error
+class GIFDecodeError : public runtime_error
 {
 public:
-    GIFParseError(const std::string& msg) : runtime_error(msg) {}
+    GIFDecodeError(const std::string& msg) : runtime_error(msg) {}
 };
 
 #endif

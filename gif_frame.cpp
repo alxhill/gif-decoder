@@ -4,17 +4,17 @@
 #include "gif_frame.hpp"
 #include "gif.hpp"
 
-void GIFFrame::parse(uint8_t *gct, uint8_t gct_size)
+void GIFFrame::decode(uint8_t *gct, uint8_t gct_size)
 {
-    parse_descriptor();
+    decode_descriptor();
     if (dsc.lct_flag)
-        parse_lct();
-    parse_data(gct, gct_size);
+        decode_lct();
+    decode_data(gct, gct_size);
 }
 
-void GIFFrame::parse_gce()
+void GIFFrame::decode_gce()
 {
-    LOG("Parsing Graphics Control Extension\n");
+    LOG("Decoding Graphics Control Extension\n");
     gif_file.read((char*)&gce.block_size, 1);
     LOG("gce block size: %d\n", (int)gce.block_size);
 
@@ -37,13 +37,13 @@ void GIFFrame::parse_gce()
     gif_file.seekg(1, gif_file.cur); // skip the block terminator
 }
 
-void GIFFrame::parse_descriptor()
+void GIFFrame::decode_descriptor()
 {
-    LOG("Parsing image descriptor\n");
+    LOG("Decoding image descriptor\n");
     char img_separator;
     gif_file.read(&img_separator, 1);
     if (img_separator != GIF::IMAGE_DESCRIPTOR)
-        throw GIFParseError(std::string("No image descriptor found."));
+        throw GIFDecodeError(std::string("No image descriptor found."));
     char dims[8];
     gif_file.read(dims, 8);
     dsc.left   = dims[0] | (dims[1]<<8);
@@ -59,9 +59,9 @@ void GIFFrame::parse_descriptor()
     dsc.lct_size = 2<<(packed&0x07); // size = 2^(N+1) where n is the last three bits of packed
 }
 
-void GIFFrame::parse_lct()
+void GIFFrame::decode_lct()
 {
-    LOG("Parsing local colour table\n");
+    LOG("Decoding local colour table\n");
     lct = new uint8_t[3*dsc.lct_size]; // 3 bytes per colour
     gif_file.read((char*) lct, 3*dsc.lct_size);
     LOG("local colour table:\n");
@@ -89,9 +89,9 @@ void reverse_byte(uint8_t &byte)
     byte = (byte & 0xAA) >> 1 | (byte & 0x55) << 1;
 }
 
-void GIFFrame::parse_data(uint8_t *gct, uint8_t gct_size)
+void GIFFrame::decode_data(uint8_t *gct, uint8_t gct_size)
 {
-    LOG("Parsing image data\n");
+    LOG("Decoding image data\n");
     uint8_t code_size;
     gif_file.read((char *) &code_size, 1);
 
@@ -100,7 +100,7 @@ void GIFFrame::parse_data(uint8_t *gct, uint8_t gct_size)
     uint8_t ct_size = dsc.lct_flag ? dsc.lct_size : gct_size;
     LOG("Colour table size: %d\n", ct_size);
     if (ct == nullptr || ct_size == 0)
-        throw GIFParseError(string("No colour table found."));
+        throw GIFDecodeError(string("No colour table found."));
     int i;
 
     vector<uint8_t> code_table(ct_size+2);
