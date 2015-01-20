@@ -94,6 +94,7 @@ void GIFFrame::decode_data(uint8_t *gct, uint8_t gct_size)
     LOG("Decoding image data\n");
     uint8_t code_size;
     gif_file.read((char *) &code_size, 1);
+    code_size++;
 
     // initialise the code table
     uint8_t *ct = dsc.lct_flag ? lct : gct;
@@ -109,33 +110,38 @@ void GIFFrame::decode_data(uint8_t *gct, uint8_t gct_size)
     for (i = 0; i < ct_size+2; i++)
         code_table[i] = i;
 
-    //uint8_t clear_code = i-1;
-    //uint8_t eoi_code = i-2;
+    uint8_t clear_code = i-1;
+    uint8_t eoi_code = i-2;
+    LOG("Clear code: %d, eoi_code %d\n", clear_code, eoi_code);
 
-    uint8_t cur_code;
-    uint16_t cur_byte;
-    gif_file.read((char*)&cur_byte, 1);
-    reverse_byte((uint8_t&)cur_byte);
+    uint8_t cur_code = 0;
+    uint16_t cur_byte = 0;
+    gif_file.read(reinterpret_cast<char*>(&cur_byte), 1);
+    LOG("Starting byte: %#04x\n", cur_byte);
     i = 0;
-    uint8_t offset = 0;
+    uint8_t bits_used = 8;
     while (i++ < 10) {
         uint8_t shift = 0;
-        while (shift < 8 - code_size) {
+        while (shift < bits_used - code_size) {
             LOG("=C=\n");
-            cur_code = get_code((uint8_t)cur_byte >> shift, code_size);
+            cur_code = get_code(static_cast<uint8_t>(cur_byte >> shift), code_size);
             code_stream.push_back(cur_code);
+            if (cur_code == (1<<code_size)-1) {
+                LOG("Increasing code size\n");
+                code_size++;
+            }
             shift += code_size;
         }
         LOG("Getting new byte. shift: %d, curr: %#04x\n", shift, cur_byte);
-        if (offset < 8) {
-            offset += 8 - shift;
-            uint8_t next_byte;
-            gif_file.read((char*)&next_byte, 1);
-            reverse_byte(next_byte);
-            cur_byte = (cur_byte >> shift) | (next_byte << offset);
-            LOG("cur_byte is now %#08x\n", cur_byte);
-        } else {
-            offset -= 8;
-        }
+        uint8_t next_byte;
+        gif_file.read((char*)&next_byte, 1);
+        cur_byte = (cur_byte >> shift) | (next_byte << (bits_used - shift));
+        bits_used = bits_used - shift + 8;
+        LOG("cur_byte is now %#08x\n", cur_byte);
     }
+    LOG("Code list: \n");
+    for (auto code : code_stream) {
+        printf("%d\n", code);
+    }
+    LOG("Did 10 of them, ceeb to keep going xoxo\n");
 }
