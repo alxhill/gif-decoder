@@ -82,19 +82,15 @@ uint8_t get_code(uint8_t byte, uint8_t bits)
     return num;
 }
 
-void reverse_byte(uint8_t &byte)
-{
-    byte = (byte & 0xF0) >> 4 | (byte & 0x0F) << 4;
-    byte = (byte & 0xCC) >> 2 | (byte & 0x33) << 2;
-    byte = (byte & 0xAA) >> 1 | (byte & 0x55) << 1;
-}
-
 void GIFFrame::decode_data(uint8_t *gct, uint8_t gct_size)
 {
     LOG("Decoding image data\n");
     uint8_t code_size;
-    gif_file.read((char *) &code_size, 1);
+    uint8_t block_size;
+    gif_file >> code_size;
+    gif_file >> block_size;
     code_size++;
+    LOG("Code size: %d, Block size: %d\n", code_size, block_size);
 
     // initialise the code table
     uint8_t *ct = dsc.lct_flag ? lct : gct;
@@ -104,44 +100,43 @@ void GIFFrame::decode_data(uint8_t *gct, uint8_t gct_size)
         throw GIFDecodeError(string("No colour table found."));
     int i;
 
-    vector<uint8_t> code_table(ct_size+2);
     vector<uint8_t> code_stream;
 
-    for (i = 0; i < ct_size+2; i++)
-        code_table[i] = i;
-
-    uint8_t clear_code = i-1;
-    uint8_t eoi_code = i-2;
+    uint8_t clear_code = ct_size+1;
+    uint8_t eoi_code = ct_size+2;
     LOG("Clear code: %d, eoi_code %d\n", clear_code, eoi_code);
 
     uint8_t cur_code = 0;
     uint16_t cur_byte = 0;
     gif_file.read(reinterpret_cast<char*>(&cur_byte), 1);
+    block_size--;
     LOG("Starting byte: %#04x\n", cur_byte);
     i = 0;
     uint8_t bits_used = 8;
-    while (i++ < 10) {
-        uint8_t shift = 0;
-        while (shift < bits_used - code_size) {
-            LOG("=C=\n");
-            cur_code = get_code(static_cast<uint8_t>(cur_byte >> shift), code_size);
-            code_stream.push_back(cur_code);
-            if (cur_code == (1<<code_size)-1) {
-                LOG("Increasing code size\n");
-                code_size++;
+    while (block_size > 0) {
+        while (block_size--) {
+            uint8_t shift = 0;
+            while (shift < bits_used - code_size) {
+                LOG("=C=\n");
+                cur_code = get_code(static_cast<uint8_t>(cur_byte >> shift), code_size);
+                code_stream.push_back(cur_code);
+                if (cur_code == (1<<code_size)-1) {
+                    LOG("INCREASING CODE SIZE\n");
+                    code_size++;
+                }
+                shift += code_size;
             }
-            shift += code_size;
+            LOG("Getting new byte. shift: %d, curr: %#04x\n", shift, cur_byte);
+            uint8_t next_byte;
+            gif_file.read((char*)&next_byte, 1);
+            cur_byte = (cur_byte >> shift) | (next_byte << (bits_used - shift));
+            bits_used = bits_used - shift + 8;
+            LOG("cur_byte is now %#08x\n", cur_byte);
         }
-        LOG("Getting new byte. shift: %d, curr: %#04x\n", shift, cur_byte);
-        uint8_t next_byte;
-        gif_file.read((char*)&next_byte, 1);
-        cur_byte = (cur_byte >> shift) | (next_byte << (bits_used - shift));
-        bits_used = bits_used - shift + 8;
-        LOG("cur_byte is now %#08x\n", cur_byte);
+        gif_file >> block_size;
     }
     LOG("Code list: \n");
     for (auto code : code_stream) {
         printf("%d\n", code);
     }
-    LOG("Did 10 of them, ceeb to keep going xoxo\n");
 }

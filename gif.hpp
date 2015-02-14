@@ -38,7 +38,7 @@ public:
     static const uint8_t EXTENSION_BLOCK_PLAINTEXT = 0x01;
     static const uint8_t EXTENSION_BLOCK_APPLICATION = 0xFF;
     static const uint8_t IMAGE_DESCRIPTOR = 0x2C;
-    static const uint8_t GIF_EOF = 0x3D;
+    static const uint8_t GIF_EOF = 0x3B;
 
     struct gif_header header;
 
