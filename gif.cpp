@@ -31,7 +31,7 @@ void GIF::decode()
 
     while(true) {
         uint8_t next;
-        gif_file.read((char*)&next, 1);
+        gif_file >> next;
         if (next == EXTENSION_BLOCK)
         {
             LOG("Reading extension block\n");

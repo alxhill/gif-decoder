@@ -1,4 +1,5 @@
 #include <cstdio>
+#include <map>
 #include <vector>
 #include <bitset>
 #include "gif_frame.hpp"
@@ -70,7 +71,7 @@ void GIFFrame::decode_lct()
     }
 }
 
-uint8_t get_code(uint8_t byte, uint8_t bits)
+uint8_t get_code(uint16_t byte, uint8_t bits)
 {
     LOG("%d bits", bits);
     uint8_t num = 0;
@@ -100,11 +101,18 @@ void GIFFrame::decode_data(uint8_t *gct, uint8_t gct_size)
         throw GIFDecodeError(string("No colour table found."));
     int i;
 
+    map<uint8_t, vector<uint8_t>> code_table;
     vector<uint8_t> code_stream;
+    vector<uint8_t> index_stream;
 
     uint8_t clear_code = ct_size+1;
     uint8_t eoi_code = ct_size+2;
     LOG("Clear code: %d, eoi_code %d\n", clear_code, eoi_code);
+
+    // initialising the code table with
+    for (unsigned char i = 0; i < ct_size; i++) {
+        code_table[i] = {i};
+    }
 
     uint8_t cur_code = 0;
     uint16_t cur_byte = 0;
@@ -118,13 +126,16 @@ void GIFFrame::decode_data(uint8_t *gct, uint8_t gct_size)
             uint8_t shift = 0;
             while (shift < bits_used - code_size) {
                 LOG("=C=\n");
-                cur_code = get_code(static_cast<uint8_t>(cur_byte >> shift), code_size);
+                cur_code = get_code(cur_byte >> shift, code_size);
+                if (cur_code == clear_code) {
+                    LOG("\n====CLEAR====\n\n");
+                }
                 code_stream.push_back(cur_code);
+                shift += code_size;
                 if (cur_code == (1<<code_size)-1) {
                     LOG("INCREASING CODE SIZE\n");
                     code_size++;
                 }
-                shift += code_size;
             }
             LOG("Getting new byte. shift: %d, curr: %#04x\n", shift, cur_byte);
             uint8_t next_byte;
