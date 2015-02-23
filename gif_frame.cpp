@@ -10,7 +10,8 @@ void GIFFrame::decode(uint8_t *gct, uint8_t gct_size)
     decode_descriptor();
     if (dsc.lct_flag)
         decode_lct();
-    decode_data(gct, gct_size);
+    decode_data(gct_size);
+    build_frame(gct, gct_size);
 }
 
 void GIFFrame::decode_gce()
@@ -83,7 +84,7 @@ uint8_t get_code(uint16_t byte, uint8_t bits)
     return num;
 }
 
-void GIFFrame::decode_data(uint8_t *gct, uint8_t gct_size)
+void GIFFrame::decode_data(uint8_t gct_size)
 {
     LOG("Decoding image data\n");
     uint8_t code_size;
@@ -94,33 +95,41 @@ void GIFFrame::decode_data(uint8_t *gct, uint8_t gct_size)
     LOG("Code size: %d, Block size: %d\n", code_size, block_size);
 
     // initialise the code table
-    uint8_t *ct = dsc.lct_flag ? lct : gct;
     uint8_t ct_size = dsc.lct_flag ? dsc.lct_size : gct_size;
     LOG("Colour table size: %d\n", ct_size);
-    if (ct == nullptr || ct_size == 0)
+    if (ct_size == 0)
         throw GIFDecodeError(string("No colour table found."));
-    int i;
 
     map<uint8_t, vector<uint8_t>> code_table;
     vector<uint8_t> code_stream;
-    vector<uint8_t> index_stream;
 
-    uint8_t clear_code = ct_size+1;
-    uint8_t eoi_code = ct_size+2;
+    uint8_t clear_code = 1<<(code_size-1);
+    uint8_t eoi_code = clear_code+1;
     LOG("Clear code: %d, eoi_code %d\n", clear_code, eoi_code);
 
-    // initialising the code table with
+    // initialising the code table with colour table
     for (unsigned char i = 0; i < ct_size; i++) {
         code_table[i] = {i};
     }
+    code_table[clear_code] = {};
+    code_table[eoi_code] = {};
 
+    uint8_t next_code = eoi_code + 1;
     uint8_t cur_code = 0;
     uint16_t cur_byte = 0;
     gif_file.read(reinterpret_cast<char*>(&cur_byte), 1);
     block_size--;
     LOG("Starting byte: %#04x\n", cur_byte);
-    i = 0;
-    uint8_t bits_used = 8;
+
+    // remove clear code and first byte (UPDATE FOR LARGER SIZES - CURRENTLY MAX IS 4)
+    cur_byte >>= code_size;
+    LOG("Changed to: %#04x\n", cur_byte);
+    code_stream.push_back(get_code(cur_byte, code_size));
+    index_stream.push_back(code_stream.back());
+    cur_byte >>= code_size;
+
+    uint8_t bits_used = 8 - code_size * 2;
+
     while (block_size > 0) {
         while (block_size--) {
             uint8_t shift = 0;
@@ -130,6 +139,19 @@ void GIFFrame::decode_data(uint8_t *gct, uint8_t gct_size)
                 if (cur_code == clear_code) {
                     LOG("\n====CLEAR====\n\n");
                 }
+                if (code_table.count(cur_code) > 0) {
+                    auto& indices = code_table[cur_code];
+                    index_stream.insert(index_stream.end(), indices.begin(), indices.end());
+                    auto new_indices = code_table[code_stream.back()];
+                    new_indices.push_back(indices[0]);
+                    code_table[next_code] = new_indices;
+                } else {
+                    auto new_indices = code_table[code_stream.back()];
+                    new_indices.push_back(new_indices[0]);
+                    index_stream.insert(index_stream.end(), new_indices.begin(), new_indices.end());
+                    code_table[next_code] = new_indices;
+                }
+                next_code++;
                 code_stream.push_back(cur_code);
                 shift += code_size;
                 if (cur_code == (1<<code_size)-1) {
@@ -149,5 +171,44 @@ void GIFFrame::decode_data(uint8_t *gct, uint8_t gct_size)
     LOG("Code list: \n");
     for (auto code : code_stream) {
         printf("%d\n", code);
+    }
+    LOG("Index stream: \n");
+    for (auto index : index_stream) {
+        printf("%d\n", index);
+    }
+
+    LOG("Code table: \n");
+    for (auto& codes : code_table) {
+        printf("%02i |", codes.first);
+        for (auto index : codes.second) {
+            printf(" %d,", index);
+        }
+        printf("\n");
+    }
+}
+
+void GIFFrame::build_frame(uint8_t *gct, uint8_t gct_size)
+{
+    uint8_t *ct = dsc.lct_flag ? lct : gct;
+    uint8_t ct_size = dsc.lct_flag ? dsc.lct_size : gct_size;
+    if (ct == nullptr || ct_size == 0)
+        throw GIFDecodeError(string("No colour table found."));
+
+    pixels = new struct rgb*[dsc.height];
+    for (int i = 0; i < dsc.width * dsc.height; i++)
+    {
+        if (i % dsc.height == 0) {
+            pixels[i / dsc.height] = new struct rgb[dsc.width];
+        }
+
+        uint8_t index = index_stream[i];
+        if (index >= ct_size)
+            throw GIFDecodeError(string("Index in stream is not in colour table"));
+
+        auto &f = pixels[i/dsc.height][i%dsc.width];
+
+        f.r = ct[index];
+        f.g = ct[index+1];
+        f.b = ct[index+2];
     }
 }

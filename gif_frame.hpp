@@ -5,9 +5,14 @@
 
 #include <iostream>
 #include <fstream>
+#include <vector>
 #include <map>
 
 using namespace std;
+
+struct rgb {
+    uint8_t r,g,b;
+};
 
 struct gif_gce
 {
@@ -31,23 +36,26 @@ struct gif_descriptor
     unsigned int lct_size;
 };
 
-
-
 class GIFFrame
 {
     struct gif_gce gce;
-    struct gif_descriptor dsc;
 
     uint8_t *lct;
+    vector<uint8_t> index_stream;
 
     ifstream &gif_file;
 public:
+    struct gif_descriptor dsc;
+    struct rgb** pixels;
+
     GIFFrame(ifstream &gfile) : gif_file(gfile) {};
     void decode(uint8_t *gct = nullptr, uint8_t gct_size = 0);
     void decode_gce();
     void decode_descriptor();
     void decode_lct();
-    void decode_data(uint8_t *gct, uint8_t gct_size);
+    void decode_data(uint8_t gct_size);
+
+    void build_frame(uint8_t *gct, uint8_t gct_size);
 };
 
 #endif

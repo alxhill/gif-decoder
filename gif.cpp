@@ -36,7 +36,7 @@ void GIF::decode()
         {
             LOG("Reading extension block\n");
             // extension block
-            gif_file.read((char*)&next, 1);
+            gif_file >> next;
             switch(next)
             {
                 case EXTENSION_BLOCK_GCE: {
@@ -96,10 +96,10 @@ void GIF::decode_header()
     header.signature[3] = '\0';
     header.version[3] = '\0';
     if (memcmp(header.signature, "GIF", 3) != 0)
-        throw GIFDecodeError(std::string("Invalid signature. Are you sure this file is a GIF?"));
+        throw GIFDecodeError(string("Invalid signature. Are you sure this file is a GIF?"));
 
     if (memcmp(header.version, "89a", 3) != 0)
-        throw GIFDecodeError(std::string("Invalid GIF version. Only GIF89a is currently supported."));
+        throw GIFDecodeError(string("Invalid GIF version. Only GIF89a is currently supported."));
 
     LOG("signature: %s\n", header.signature);
     LOG("version: %s\n", header.version);
@@ -155,3 +155,7 @@ void GIF::skip_extension()
     }
 }
 
+GIFFrame* GIF::operator[](int i)
+{
+    return frames[i];
+}

@@ -47,6 +47,8 @@ public:
     void open(string filename);
     void decode();
 
+    GIFFrame* operator[](int i);
+
     virtual ~GIF();
 
 protected:
