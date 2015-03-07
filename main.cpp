@@ -34,9 +34,9 @@ int main(int argc, const char * argv[]) {
     gif_texture.loadFromImage(sf_gif);
     sf::Sprite gif_sprite;
     gif_sprite.setTexture(gif_texture, true);
+    gif_sprite.scale(3, 3);
 
-    sf::RenderWindow window(sf::VideoMode(frame->dsc.width, frame->dsc.height), "First gif frame!");
-    window.display();
+    sf::RenderWindow window(sf::VideoMode(3*frame->dsc.width, 3*frame->dsc.height), "First gif frame!");
 
     while(window.isOpen())
     {
@@ -49,6 +49,7 @@ int main(int argc, const char * argv[]) {
 
         window.clear();
         window.draw(gif_sprite);
+        window.display();
     }
 
     return 0;

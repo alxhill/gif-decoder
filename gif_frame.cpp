@@ -197,18 +197,18 @@ void GIFFrame::build_frame(uint8_t *gct, uint8_t gct_size)
     pixels = new struct rgb*[dsc.height];
     for (int i = 0; i < dsc.width * dsc.height; i++)
     {
-        if (i % dsc.height == 0) {
-            pixels[i / dsc.height] = new struct rgb[dsc.width];
+        if (i % dsc.width == 0) {
+            pixels[i / dsc.width] = new struct rgb[dsc.width];
         }
 
         uint8_t index = index_stream[i];
         if (index >= ct_size)
             throw GIFDecodeError(string("Index in stream is not in colour table"));
 
-        auto &f = pixels[i/dsc.height][i%dsc.width];
+        auto &f = pixels[i/dsc.width][i%dsc.width];
 
-        f.r = ct[index];
-        f.g = ct[index+1];
-        f.b = ct[index+2];
+        f.r = ct[index*3];
+        f.g = ct[index*3+1];
+        f.b = ct[index*3+2];
     }
 }
